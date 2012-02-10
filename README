@@ -2,11 +2,12 @@ BprImport - a simple CLI tool used for importing information from text files
 into Cisco's Broadband Access Center (BAC) software suite. It is written in Java
 and uses Cisco's BAC API libraries (bpr.jar and bacbase.jar). 
 
-Copyright (C) 2007 Cable Constructors, Inc.
+Copyright (C) 2007-2012 CCI Systems, Inc.
 
 Compile
 -------
 
+Compiling and running the applications require the bpr.jar and bacbase.jar be in your classpath. I can't include these libraries with the code they have to be obtained through Cisco.
 
 
 
