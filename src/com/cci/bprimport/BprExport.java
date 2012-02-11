@@ -2,8 +2,14 @@ package com.cci.bprimport;
 
 import com.cisco.provisioning.cpe.*;
 import com.cisco.provisioning.cpe.api.*;
+import com.cisco.*;
+import com.cisco.provisioning.cpe.constants.*;
 import java.io.*;
 import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * BprImport reads in a | delimineted file that contains information about DOCSIS
@@ -45,7 +51,8 @@ public class BprExport {
 			// get all DOCSIS modem records
 			// Search based on a mac address pattern of *
 		
-			modems = bpr.getAllDOCSISModems();
+			modems = bpr.getAllMTAs();
+			//modems = bpr.getAllDOCSISModems();
 					// 	
 					// FileReader input = new FileReader(args[4]);
 					// 					
@@ -86,17 +93,18 @@ public class BprExport {
 		// 		System.out.println(ioe.getMessage());
 		// 	}
 		
-		System.out.print("Success\n");
+		//System.out.print("Success\n");
 		
 		//System.out.print("Sending batch to the RDU (this may take several minutes)...");
 		// Step 4 - Post the batch to the RDU
 		//bpr.postBatch();
 		//System.out.print("Success\n\n");
 		
-		System.out.print("Disconnecting...");
+		
 		// Step 5 - Verify the batch.
 		bpr.endBatch();
 		// Step 6 - Disconnect
+		System.out.print("Disconnecting...");
 		bpr.disconnect();
 		System.out.print("Success\n");
 		
@@ -163,39 +171,198 @@ public class BprExport {
 		String startMac = null;
 		BatchStatus curStatus = null;
 		CommandStatus comStatus = null;
+		int modem_count = 0;
 		
 		MACAddressPattern pattern = new MACAddressPattern("*");
 		MACAddressSearchType mst = MACAddressSearchType.getByDeviceType(DeviceType.DOCSIS, pattern);
-		MACAddressSearchFilter msf = new MACAddressSearchFilter(mst,false,20);
+		MACAddressSearchFilter msf = new MACAddressSearchFilter(mst,true,100);
 		
-		while((modems == null || modems.size() == 20)) {
+		try {
+		// create output file
+		BufferedWriter buff = new BufferedWriter(new FileWriter(new File("duo_county_docsis_export.txt"), false));
+	
+		System.out.print("Exporting ...");
+	
+		while((modems == null || modems.size() == 100)) {
+				
 			
 			startBatch();
-			System.out.println("Searching ...");
+			
 			batch.search(msf,startMac);
 			postBatch();
-			System.out.println("Complete!");
+			
 			
 			if(0 < status.getCommandCount()) {
 				comStatus = status.getCommandStatus(0);
 			}
 			
-			if (status.isError() 
-			|| status.isWarning()
-			|| comStatus == null
-			|| comStatus.isError())
-			{
-				System.out.println("batch error");
+			if (status.isError()) {
+				System.out.println("\n" + status.getErrorMessage());
+			} else if (comStatus.isError()) {
+				System.out.println("\n" + comStatus.getErrorMessage());
+			} else if (status.isWarning()) {
+				System.out.println("\n" + status.getErrorMessage());
+			} else if (comStatus == null) {
+				System.out.println("\ncomStatus was null");
 			}
 			
+		
 			modems = (List)comStatus.getData();
 			
+			Iterator iter = modems.iterator();
 			// need to process the modem counts
-		
-			System.out.println(modems.size());
+			while (iter.hasNext()) {
+				startMac = (String) iter.next();
+				
+				Map detailMap = null;
+				
+				startBatch();
+				batch.getDetails(startMac,false);
+				postBatch();
+				
+				if(0 < status.getCommandCount()) {
+					comStatus = status.getCommandStatus(0);
+				}
+
+				if (status.isError()) {
+					System.out.println("\n" + status.getErrorMessage());
+				} else if (comStatus.isError()) {
+					System.out.println("\n" + comStatus.getErrorMessage());
+				} else if (status.isWarning()) {
+					System.out.println("\n" + status.getErrorMessage());
+				} else if (comStatus == null) {
+					System.out.println("\ncomStatus was null");
+				}
+
+				detailMap = (Map)comStatus.getData();
+				modem_count++;
+				
+				String ownerID = (String)detailMap.get("/ownerID");
+				String dhcpCriteria = (String)detailMap.get("/provisioning/dhcpCriteria");
+				String cos = (String)detailMap.get("/provisioning/classOfService");
+				String macAddress = (String)detailMap.get("/network/macAddress");
+				String dversion = (String)detailMap.get("/network/docsisVersion");
+				
+				//write out to file
+				System.out.print("#");
+
+				String device = ownerID + "|" + macAddress + "|" + cos + "|" + dhcpCriteria;
+				
+				buff.write(device);
+				buff.newLine();
+				
+			}
+			//System.out.println(modems.size());
 			
 		}
+	
+		buff.close();
+		System.out.println("\n" + Integer.toString(modem_count) + " modem(s) exported.");
+	} catch (Exception e) { 
+		System.out.println(e.toString());
+		}
 		
+		return modems;
+		
+	}
+	
+	
+	public List getAllMTAs() {
+		
+		List modems = null;
+		String startMac = null;
+		BatchStatus curStatus = null;
+		CommandStatus comStatus = null;
+		int modem_count = 0;
+		
+		MACAddressPattern pattern = new MACAddressPattern("*");
+		MACAddressSearchType mst = MACAddressSearchType.getByDeviceType(DeviceType.PACKET_CABLE_MTA, pattern);
+		MACAddressSearchFilter msf = new MACAddressSearchFilter(mst,true,100);
+		
+		try {
+		// create output file
+		BufferedWriter buff = new BufferedWriter(new FileWriter(new File("duo_county_pktcbl_export.txt"), false));
+	
+		System.out.print("Exporting ...");
+	
+		while((modems == null || modems.size() == 100)) {
+				
+			
+			startBatch();
+			
+			batch.search(msf,startMac);
+			postBatch();
+			
+			
+			if(0 < status.getCommandCount()) {
+				comStatus = status.getCommandStatus(0);
+			}
+			
+			if (status.isError()) {
+				System.out.println("\n" + status.getErrorMessage());
+			} else if (comStatus.isError()) {
+				System.out.println("\n" + comStatus.getErrorMessage());
+			} else if (status.isWarning()) {
+				System.out.println("\n" + status.getErrorMessage());
+			} else if (comStatus == null) {
+				System.out.println("\ncomStatus was null");
+			}
+			
+		
+			modems = (List)comStatus.getData();
+			
+			Iterator iter = modems.iterator();
+			// need to process the modem counts
+			while (iter.hasNext()) {
+				startMac = (String) iter.next();
+				
+				Map detailMap = null;
+				
+				startBatch();
+				batch.getDetails(startMac,false);
+				postBatch();
+				
+				if(0 < status.getCommandCount()) {
+					comStatus = status.getCommandStatus(0);
+				}
+
+				if (status.isError()) {
+					System.out.println("\n" + status.getErrorMessage());
+				} else if (comStatus.isError()) {
+					System.out.println("\n" + comStatus.getErrorMessage());
+				} else if (status.isWarning()) {
+					System.out.println("\n" + status.getErrorMessage());
+				} else if (comStatus == null) {
+					System.out.println("\ncomStatus was null");
+				}
+
+				detailMap = (Map)comStatus.getData();
+				modem_count++;
+				
+				String ownerID = (String)detailMap.get("/ownerID");
+				String dhcpCriteria = (String)detailMap.get("/provisioning/dhcpCriteria");
+				String cos = (String)detailMap.get("/provisioning/classOfService");
+				String macAddress = (String)detailMap.get("/network/macAddress");
+				String dversion = (String)detailMap.get("/network/docsisVersion");
+				
+				//write out to file
+				System.out.print("#");
+
+				String device = ownerID + "|" + macAddress + "|" + cos + "|" + dhcpCriteria;
+				
+				buff.write(device);
+				buff.newLine();
+				
+			}
+			//System.out.println(modems.size());
+			
+		}
+	
+		buff.close();
+		System.out.println("\n" + Integer.toString(modem_count) + " modem(s) exported.");
+	} catch (Exception e) { 
+		System.out.println(e.toString());
+		}
 		
 		return modems;
 		
