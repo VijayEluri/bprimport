@@ -141,8 +141,8 @@ public class BprImport {
 	 */
 	public void addCableModem(String ownerID, String macAddress, String classOfService) {
 		if(batch != null) {
-			batch.add(
-					DeviceType.DOCSIS, 
+			batch.addDOCSISModem(
+					//DeviceType.DOCSIS, 
 					macAddress,
 					null,
 					null,
