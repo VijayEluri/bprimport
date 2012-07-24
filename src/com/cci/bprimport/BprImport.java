@@ -130,7 +130,7 @@ public class BprImport {
 			System.out.println(e.getMessage());
 			System.exit(0);
 		}
-		catch(BPRAuthenticationException e)
+		catch(AuthenticationException e)
 		{
 			// Authentication failure
 			System.out.println(e.getMessage());
@@ -161,12 +161,12 @@ public class BprImport {
 			}
 				
 			
-			//List devIds = new ArrayList();
-			//devIds.add(new MACAddress(macAddress));
+			List devIds = new ArrayList();
+			devIds.add(new MACAddress(macAddress));
 			batch.add(
 					DeviceType.DOCSIS, 
-					//devIds,
-					macAddress,
+					devIds,
+					//macAddress,
 					null,
 					null,
 					ownerID,
@@ -201,12 +201,12 @@ public class BprImport {
 			}
 				
 			
-			//List devIds = new ArrayList();
-			//devIds.add(new MACAddress(macAddress));
+			List devIds = new ArrayList();
+			devIds.add(new MACAddress(macAddress));
 			batch.add(
 					DeviceType.PACKET_CABLE_MTA, 
-					//devIds,
-					macAddress,
+					devIds,
+					//macAddress,
 					hostname,
 					domainName,
 					ownerID,

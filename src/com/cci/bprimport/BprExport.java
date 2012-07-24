@@ -2,6 +2,7 @@ package com.cci.bprimport;
 
 import com.cisco.provisioning.cpe.*;
 import com.cisco.provisioning.cpe.api.*;
+import com.cisco.provisioning.cpe.api.search.*;
 import com.cisco.*;
 import com.cisco.provisioning.cpe.constants.*;
 import java.io.*;
@@ -137,7 +138,7 @@ public class BprExport {
 			System.out.println(e.getMessage());
 			System.exit(0);
 		}
-		catch(BPRAuthenticationException e)
+		catch(AuthenticationException e)
 		{
 			// Authentication failure
 			System.out.println(e.getMessage());
@@ -145,26 +146,7 @@ public class BprExport {
 		}
 	}
 	
-	/**
-	 * Inserts an add cable modem command into the batch.
-	 * 
-	 * @param ownerID			Customer/Account ID for this cable modem
-	 * @param macAddress		MAC address of the cable modem
-	 * @param classOfService	The class of service to assign to this modem
-	 */
-	public void addCableModem(String ownerID, String macAddress, String classOfService) {
-		if(batch != null) {
-			batch.add(
-					DeviceType.DOCSIS, 
-					macAddress,
-					null,
-					null,
-					ownerID,
-					classOfService,
-					"provisioned-docsis",
-					null);
-		}
-	}
+	
 	
 	public List getAllDOCSISModems() {
 		
