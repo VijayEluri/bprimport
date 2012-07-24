@@ -53,7 +53,7 @@ public class BprExport {
 			// Search based on a mac address pattern of *
 		
 			modems = bpr.getAllDOCSISModems();
-			modems = bpr.getAllMTAs();
+			//modems = bpr.getAllMTAs();
 			
 					// 	
 					// FileReader input = new FileReader(args[4]);
@@ -146,7 +146,97 @@ public class BprExport {
 		}
 	}
 	
+	private RecordSearchResults searchDevice(DeviceSearchType dst, SearchBookmark sb) throws Exception {
 	
+		RecordSearchResults rs = null;
+		CommandStatus comStatus = null;
+		
+		startBatch();
+		batch.searchDevice(dst, sb, 100);
+		postBatch();
+		
+		if(0 < status.getCommandCount()) {
+				comStatus = status.getCommandStatus(0);
+		}
+			
+		if (status.isError()) {
+			System.out.println("\n" + status.getErrorMessage());
+		} else if (comStatus.isError()) {
+			System.out.println("\n" + comStatus.getErrorMessage());
+		} else if (status.isWarning()) {
+			System.out.println("\n" + status.getErrorMessage());
+		} else if (comStatus == null) {
+			System.out.println("\ncomStatus was null");
+		}
+		
+		rs = (RecordSearchResults)comStatus.getData();
+		return rs;
+		
+	}
+	
+	private SearchBookmark printRecordSearchResults(RecordSearchResults rs, BufferedWriter buf) throws Exception {
+	
+		SearchBookmark sb = rs.getSearchBookmark();
+		CommandStatus comStatus = null;
+		List<RecordData> rdlist = rs.getRecordData();
+		Iterator<RecordData> iter = rdlist.iterator();
+		
+		while(iter.hasNext()) {
+			
+			RecordData rdObj = iter.next();
+			Key keyObj = rdObj.getPrimaryKey();
+			
+			//System.out.println("DeviceOID: " + ((DeviceID)keyObj).getDeviceId());
+			
+			List<Key> deviceList = rdObj.getSecondaryKeys();
+			
+			if (deviceList != null && !deviceList.isEmpty()) {
+			
+				for (int i = 0; i <deviceList.size(); i++)
+				{
+					Key key = deviceList.get(i);
+					//System.out.println("DeviceID :" + key.toString());
+					DeviceID id = new MACAddress(key.toString());
+					Map detailMap = null;
+				
+				startBatch();
+				batch.getDetails(id,null);
+				postBatch();
+				
+				if(0 < status.getCommandCount()) {
+					comStatus = status.getCommandStatus(0);
+				}
+
+				if (status.isError()) {
+					System.out.println("\n" + status.getErrorMessage());
+				} else if (comStatus.isError()) {
+					System.out.println("\n" + comStatus.getErrorMessage());
+				} else if (status.isWarning()) {
+					System.out.println("\n" + status.getErrorMessage());
+				} else if (comStatus == null) {
+					System.out.println("\ncomStatus was null");
+				}
+
+				detailMap = (Map)comStatus.getData();
+				modem_count++;
+				
+				String ownerID = (String)detailMap.get("/ownerID");
+				String dhcpCriteria = (String)detailMap.get("/provisioning/dhcpCriteria");
+				String cos = (String)detailMap.get("/provisioning/classOfService");
+				String macAddress = (String)detailMap.get("/network/macAddress");
+				String dversion = (String)detailMap.get("/network/docsisVersion");
+
+				String device = ownerID + "|" + key.toString() + "|" + cos + "|" + dhcpCriteria;
+				System.out.println(device);
+					
+				}
+			}
+			
+		}
+	
+		return sb;
+	
+	}
 	
 	public List getAllDOCSISModems() {
 		
@@ -154,18 +244,36 @@ public class BprExport {
 		String startMac = null;
 		BatchStatus curStatus = null;
 		CommandStatus comStatus = null;
-		int modem_count = 0;
+		//int modem_count = 0;
 		
-		MACAddressPattern pattern = new MACAddressPattern("*");
-		MACAddressSearchType mst = MACAddressSearchType.getByDeviceType(DeviceType.DOCSIS, pattern);
-		MACAddressSearchFilter msf = new MACAddressSearchFilter(mst,true,100);
+		// MACAddressPattern pattern = new MACAddressPattern("*");
+		// MACAddressSearchType mst = MACAddressSearchType.getByDeviceType(DeviceType.DOCSIS, pattern);
+		// MACAddressSearchFilter msf = new MACAddressSearchFilter(mst,true,100);
+		
+		DeviceSearchType dst = DeviceSearchType.getByDeviceType(
+		DeviceType.getDeviceType(DeviceTypeValues.DOCSIS_MODEM),ReturnParameters.ALL);
+		
 		
 		try {
-		// create output file
-		BufferedWriter buff = new BufferedWriter(new FileWriter(new File("duo_county_docsis_export.txt"), false));
+			// create output file
+			BufferedWriter buff = new BufferedWriter(new FileWriter(new File("duo_county_docsis_export.txt"), false));
 	
-		System.out.print("Exporting ...");
-	
+			System.out.print("Exporting ...");
+			modem_count = 0;
+			RecordSearchResults rs = null;
+			SearchBookmark sb = null;
+		
+			rs = searchDevice(dst, sb);
+			sb = rs.getSearchBookmark();
+			 
+			while(sb != null) {
+				
+				sb = printRecordSearchResults(rs,buff);
+				
+				rs = searchDevice(dst, sb);
+			}
+			
+			/*
 		while((modems == null || modems.size() == 100)) {
 				
 			
@@ -239,6 +347,7 @@ public class BprExport {
 			
 		}
 	
+		*/
 		buff.close();
 		System.out.println("\n" + Integer.toString(modem_count) + " modem(s) exported.");
 	} catch (Exception e) { 
@@ -249,7 +358,7 @@ public class BprExport {
 		
 	}
 	
-	
+	/*
 	public List getAllMTAs() {
 		
 		List modems = null;
@@ -350,7 +459,7 @@ public class BprExport {
 		return modems;
 		
 	}
-	
+	*/
 	/**
 	 * Initializes the batch using the connection object.
 	 */
@@ -413,5 +522,6 @@ public class BprExport {
 	private PACEConnection connection;
 	private Batch batch;
 	private BatchStatus status;
+	private int modem_count;
 
 }
