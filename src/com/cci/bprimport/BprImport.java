@@ -3,6 +3,7 @@ package com.cci.bprimport;
 import com.cisco.provisioning.cpe.*;
 import com.cisco.provisioning.cpe.api.*;
 import java.io.*;
+import java.util.*;
 
 /**
  * BprImport reads in a | delimineted file that contains information about DOCSIS
@@ -33,12 +34,12 @@ public class BprImport {
 		System.out.print("Success\n\n");
 		
 		// Step 2 - Create a batch to use
-		System.out.print("Creating the batch...");
-		bpr.startBatch();
-		System.out.print("Success\n\n");
+		//System.out.print("Creating the batch...");
+		
+		//System.out.print("Success\n\n");
 		
 		// Step 3 - Loop through devices in file and add each one
-		// 12345|1,6,00:11:22:33:44:55|silver
+		// 12345|1,6,00:11:22:33:44:55|silver|provisioned-docsis
 		// ownerID|macAddress|classOfService
 		
 		System.out.print("Adding devices to the batch");
@@ -61,16 +62,21 @@ public class BprImport {
 				// temp[0] = Owner ID
 				// temp[1] = MAC Address
 				// temp[2] = Class of Service
+				// temp[3] = DHCP Criteria
 				
 				/*
 				System.out.println("ID: " + temp[0]);
 				System.out.println("MAC: " + temp[1]);
 				System.out.println("COS: " + temp[2]);
+				System.out.println("DHCP:" + temp[3]);
 				System.out.println("---------------");
 				*/
-				
-				bpr.addCableModem(temp[0], temp[1], temp[2]);
-				System.out.print(".");
+				bpr.startBatch();
+				// bpr.addCableModem(temp[0], temp[1], temp[2], temp[3]);
+				bpr.addPacketCableMTA(temp[0], temp[1], temp[2], temp[3]);
+				bpr.postBatch();
+				bpr.endBatch();
+				//System.out.print(".");
 				
 				// Get next line
 				line = bufRead.readLine();
@@ -82,16 +88,16 @@ public class BprImport {
 			System.out.println(ioe.getMessage());
 		}
 		
-		System.out.print("Success\n");
-		
-		System.out.print("Sending batch to the RDU (this may take several minutes)...");
-		// Step 4 - Post the batch to the RDU
-		bpr.postBatch();
-		System.out.print("Success\n\n");
-		
-		System.out.print("Disconnecting...");
+		// System.out.print("Success\n");
+		// 		
+		// 		System.out.print("Sending batch to the RDU (this may take several minutes)...");
+		// 		// Step 4 - Post the batch to the RDU
+		// 		bpr.postBatch();
+		// 		System.out.print("Success\n\n");
+		// 		
+		// 		System.out.print("Disconnecting...");
 		// Step 5 - Verify the batch.
-		bpr.endBatch();
+		
 		// Step 6 - Disconnect
 		bpr.disconnect();
 		System.out.print("Success\n");
@@ -139,16 +145,73 @@ public class BprImport {
 	 * @param macAddress		MAC address of the cable modem
 	 * @param classOfService	The class of service to assign to this modem
 	 */
-	public void addCableModem(String ownerID, String macAddress, String classOfService) {
+	public void addCableModem(String ownerID, String macAddress, String classOfService, String dhcpCriteria) {
 		if(batch != null) {
-			batch.addDOCSISModem(
-					//DeviceType.DOCSIS, 
+			
+			if(ownerID.equals("null")){
+				ownerID = null;
+			}
+			
+			if(classOfService.equals("null")) {
+				classOfService = null;
+			}
+			
+			if(dhcpCriteria.equals("null")) {
+				dhcpCriteria = null;
+			}
+				
+			
+			//List devIds = new ArrayList();
+			//devIds.add(new MACAddress(macAddress));
+			batch.add(
+					DeviceType.DOCSIS, 
+					//devIds,
 					macAddress,
 					null,
 					null,
 					ownerID,
 					classOfService,
-					"provisioned-docsis",
+					dhcpCriteria,
+					null);
+		}
+	}
+	
+	public void addPacketCableMTA(String ownerID, String macAddress, String classOfService, String dhcpCriteria) {
+		if(batch != null) {
+			
+			if(ownerID.equals("null")){
+				ownerID = null;
+			}
+			
+			if(classOfService.equals("null")) {
+				classOfService = null;
+			}
+			
+			if(dhcpCriteria.equals("null")) {
+				dhcpCriteria = null;
+			}
+			
+			String hostname = macAddress.replace(':','-');
+			hostname = hostname.replace(',','-');
+			
+			String domainName = "duovoip.loc";
+			
+			if(dhcpCriteria != null && dhcpCriteria.equals("provisioned-packet-cable")) {
+				dhcpCriteria = "provisioned-packet-cable-mta";
+			}
+				
+			
+			//List devIds = new ArrayList();
+			//devIds.add(new MACAddress(macAddress));
+			batch.add(
+					DeviceType.PACKET_CABLE_MTA, 
+					//devIds,
+					macAddress,
+					hostname,
+					domainName,
+					ownerID,
+					classOfService,
+					dhcpCriteria,
 					null);
 		}
 	}

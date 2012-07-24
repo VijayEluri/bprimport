@@ -51,8 +51,9 @@ public class BprExport {
 			// get all DOCSIS modem records
 			// Search based on a mac address pattern of *
 		
+			modems = bpr.getAllDOCSISModems();
 			modems = bpr.getAllMTAs();
-			//modems = bpr.getAllDOCSISModems();
+			
 					// 	
 					// FileReader input = new FileReader(args[4]);
 					// 					
@@ -359,7 +360,7 @@ public class BprExport {
 		}
 	
 		buff.close();
-		System.out.println("\n" + Integer.toString(modem_count) + " modem(s) exported.");
+		System.out.println("\n" + Integer.toString(modem_count) + " mta(s) exported.");
 	} catch (Exception e) { 
 		System.out.println(e.toString());
 		}

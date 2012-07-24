@@ -8,8 +8,9 @@
 	<property name="dist" location="dist"/>
 	<property name="version" value="1.0.0"/>
 	
-	<path id="classpath">
-		<fileset dir="${lib}" includes="**/*.jar"/>
+	<path id="class.path">
+		<pathelement location="${lib}/bpr.jar"/>
+		<pathelement location="${lib}/bacbase.jar"/>
 	</path>
 	
 	<target name="init">
@@ -17,7 +18,7 @@
 	</target>
 	
 	<target name="compile" depends="init">
-		<javac srcdir="${src}" destdir="${build}" classpathref="classpath"/>
+		<javac srcdir="${src}" destdir="${build}" classpathref="class.path"/>
 	</target>
 	
 	<target name="dist" depends="compile" description="generate the distribution">
