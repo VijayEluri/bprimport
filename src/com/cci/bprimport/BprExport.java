@@ -13,21 +13,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * BprImport reads in a | delimineted file that contains information about DOCSIS
- * cable modems that need to be imported into BAC. BprImport initializes a connection
- * to the BAC RDU component, creates a batch, adds the modems to the batch, posts the batch,
- * verifies it was successful, and then closes the connection to the RDU.
+ * BprExport connects to an RDU device, queries all MTA and DOCSIS devices out of the
+ * database and writes them to a file. 
  * <p>
- * Usage: java bprexport <rdu address> <port> <username> <password> <file name>
+ * Usage: com.cci.bprimport.BprExport <rdu address> <port> <username> <password> <file name>
  * <p>
  * @author Matt Reath
- * @version 0.1
+ * @version 0.2
  * 
  */
 public class BprExport {
 
 	/**
-	 * Entry point into the BprImport application.
+	 * Entry point into the BprExport application.
 	 * 
 	 * @param args	Contains the CLI arguments
 	 */
@@ -40,67 +38,10 @@ public class BprExport {
 		bpr.initializeConnectionToRDU(args[0], Integer.parseInt(args[1]), args[2], args[3]);
 		System.out.print("Success\n\n");
 		
-		// Step 2 - Create a batch to use
-		//System.out.print("Creating the batch...");
-		//bpr.startBatch();
-		//System.out.print("Success\n\n");
-		
 		List modems = null;
 		
-		//System.out.print("Adding devices to the batch");
-		// try {
-			// get all DOCSIS modem records
-			// Search based on a mac address pattern of *
-		
-			modems = bpr.getAllDOCSISModems();
-			//modems = bpr.getAllMTAs();
-			
-					// 	
-					// FileReader input = new FileReader(args[4]);
-					// 					
-					// BufferedReader bufRead  = new BufferedReader(input);
-								
-			// 		String line;
-			// 		
-			// 		line = bufRead.readLine();
-			// 		
-			// 		while(line != null) {
-			// 			//System.out.println(line);
-			// 			
-			// 			String temp [] = null;
-			// 			
-			// 			temp = line.split("\\|");
-			// 			
-			// 			// temp[0] = Owner ID
-			// 			// temp[1] = MAC Address
-			// 			// temp[2] = Class of Service
-			// 			
-			// 			/*
-			// 			System.out.println("ID: " + temp[0]);
-			// 			System.out.println("MAC: " + temp[1]);
-			// 			System.out.println("COS: " + temp[2]);
-			// 			System.out.println("---------------");
-			// 			*/
-			// 			
-			// 			bpr.addCableModem(temp[0], temp[1], temp[2]);
-			// 			System.out.print(".");
-			// 			
-			// 			// Get next line
-			// 			line = bufRead.readLine();
-			// 		}
-			
-		// } catch (FileNotFoundException fnfe) {
-		// 		System.out.println(fnfe.getMessage());
-		// 	} catch (IOException ioe) {
-		// 		System.out.println(ioe.getMessage());
-		// 	}
-		
-		//System.out.print("Success\n");
-		
-		//System.out.print("Sending batch to the RDU (this may take several minutes)...");
-		// Step 4 - Post the batch to the RDU
-		//bpr.postBatch();
-		//System.out.print("Success\n\n");
+		modems = bpr.getAllDOCSISModems();
+		//modems = bpr.getAllMTAs();
 		
 		
 		// Step 5 - Verify the batch.
