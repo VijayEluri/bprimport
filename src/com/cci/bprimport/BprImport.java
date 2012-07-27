@@ -30,7 +30,7 @@ public class BprImport {
 		
 		// Step 1 - Connect to the RDU
 		System.out.print("Connecting to the RDU...");
-		bpr.initializeConnectionToRDU(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+		bpr.initializeConnectionToRDU(args[1], Integer.parseInt(args[2]), args[3], args[4]);
 		System.out.print("Success\n\n");
 		
 		// Step 2 - Create a batch to use
@@ -40,11 +40,11 @@ public class BprImport {
 		
 		// Step 3 - Loop through devices in file and add each one
 		// 12345|1,6,00:11:22:33:44:55|silver|provisioned-docsis
-		// ownerID|macAddress|classOfService
+		// ownerID|macAddress|classOfService|dhcp-criteria
 		
 		System.out.print("Adding devices to the batch");
 		try {
-			FileReader input = new FileReader(args[4]);
+			FileReader input = new FileReader(args[5]);
 			
 			BufferedReader bufRead  = new BufferedReader(input);
 			
@@ -72,8 +72,14 @@ public class BprImport {
 				System.out.println("---------------");
 				*/
 				bpr.startBatch();
-				// bpr.addCableModem(temp[0], temp[1], temp[2], temp[3]);
-				bpr.addPacketCableMTA(temp[0], temp[1], temp[2], temp[3]);
+				
+				// need to put a flag in here to select either MTA or DOCSIS
+				if(args[0].equals("-d")) {
+					bpr.addCableModem(temp[0], temp[1], temp[2], temp[3]);
+				} else if(args[0].equals("-m")) {
+					bpr.addPacketCableMTA(temp[0], temp[1], temp[2], temp[3]);
+				}
+				
 				bpr.postBatch();
 				bpr.endBatch();
 				//System.out.print(".");
